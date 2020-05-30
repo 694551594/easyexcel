@@ -1,20 +1,5 @@
 package com.alibaba.excel.write.executor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-
 import com.alibaba.excel.context.WriteContext;
 import com.alibaba.excel.enums.CellDataTypeEnum;
 import com.alibaba.excel.enums.WriteDirectionEnum;
@@ -29,8 +14,10 @@ import com.alibaba.excel.write.metadata.fill.AnalysisCell;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.alibaba.excel.write.metadata.fill.FillWrapper;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
-
 import net.sf.cglib.beans.BeanMap;
+import org.apache.poi.ss.usermodel.*;
+
+import java.util.*;
 
 /**
  * Fill the data into excel
@@ -164,7 +151,7 @@ public class ExcelWriteFillExecutor extends AbstractExcelWriteExecutor {
     }
 
     private void increaseRowIndex(Map<String, List<AnalysisCell>> templateAnalysisCache, int number, int maxRowIndex,
-        String tablePrefix) {
+                                  String tablePrefix) {
         for (Map.Entry<String, List<AnalysisCell>> entry : templateAnalysisCache.entrySet()) {
             if (!tablePrefix.equals(tablePrefix(entry.getKey()))) {
                 continue;
@@ -178,7 +165,7 @@ public class ExcelWriteFillExecutor extends AbstractExcelWriteExecutor {
     }
 
     private void doFill(List<AnalysisCell> analysisCellList, Object oneRowData, FillConfig fillConfig,
-        Integer relativeRowIndex) {
+                        Integer relativeRowIndex) {
         Map dataMap;
         if (oneRowData instanceof Map) {
             dataMap = (Map) oneRowData;
@@ -195,10 +182,11 @@ public class ExcelWriteFillExecutor extends AbstractExcelWriteExecutor {
                 if (writeContext.currentWriteHolder().ignore(variable, analysisCell.getColumnIndex())) {
                     continue;
                 }
-                if (!dataMap.containsKey(variable)) {
-                    continue;
-                }
-                Object value = dataMap.get(variable);
+//                if (!dataMap.containsKey(variable)) {
+//                    continue;
+//                }
+//                Object value = dataMap.get(variable);
+                Object value = fillConfig.getFillVariableValueResolver().resolveValue(variable, dataMap);
                 CellData cellData = converterAndSet(writeSheetHolder, value == null ? null : value.getClass(), cell,
                     value, fieldNameContentPropertyMap.get(variable), null, relativeRowIndex);
                 WriteHandlerUtils.afterCellDispose(writeContext, cellData, cell, null, relativeRowIndex, Boolean.FALSE);
@@ -211,10 +199,11 @@ public class ExcelWriteFillExecutor extends AbstractExcelWriteExecutor {
                     if (writeContext.currentWriteHolder().ignore(variable, analysisCell.getColumnIndex())) {
                         continue;
                     }
-                    if (!dataMap.containsKey(variable)) {
-                        continue;
-                    }
-                    Object value = dataMap.get(variable);
+//                    if (!dataMap.containsKey(variable)) {
+//                        continue;
+//                    }
+//                    Object value = dataMap.get(variable);
+                    Object value = fillConfig.getFillVariableValueResolver().resolveValue(variable, dataMap);
                     CellData cellData = convert(writeSheetHolder, value == null ? null : value.getClass(), cell, value,
                         fieldNameContentPropertyMap.get(variable));
                     cellDataList.add(cellData);
@@ -310,6 +299,8 @@ public class ExcelWriteFillExecutor extends AbstractExcelWriteExecutor {
             } else {
                 checkRowHeight(analysisCell, fillConfig, isOriginalCell, row);
             }
+        } else {
+            checkRowHeight(analysisCell, fillConfig, isOriginalCell, row);
         }
         Cell cell = row.getCell(lastColumnIndex);
         if (cell == null) {
@@ -398,7 +389,8 @@ public class ExcelWriteFillExecutor extends AbstractExcelWriteExecutor {
         int startIndex = 0;
         int length = value.length();
         int lastPrepareDataIndex = 0;
-        out: while (startIndex < length) {
+        out:
+        while (startIndex < length) {
             int prefixIndex = value.indexOf(FILL_PREFIX, startIndex);
             if (prefixIndex < 0) {
                 break out;
@@ -456,7 +448,7 @@ public class ExcelWriteFillExecutor extends AbstractExcelWriteExecutor {
     }
 
     private String dealAnalysisCell(AnalysisCell analysisCell, String value, int rowIndex, int lastPrepareDataIndex,
-        int length, Map<String, Set<Integer>> firstRowCache, StringBuilder preparedData) {
+                                    int length, Map<String, Set<Integer>> firstRowCache, StringBuilder preparedData) {
         if (analysisCell != null) {
             if (lastPrepareDataIndex == length) {
                 analysisCell.getPrepareDataList().add(StringUtils.EMPTY);
