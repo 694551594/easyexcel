@@ -1,6 +1,9 @@
 package com.alibaba.excel.write.metadata.fill;
 
 import com.alibaba.excel.enums.WriteDirectionEnum;
+import com.alibaba.excel.event.FillVariableValueResolver;
+
+import java.util.Map;
 
 /**
  * Fill config
@@ -17,6 +20,21 @@ public class FillConfig {
      */
     private Boolean forceNewRow;
     private boolean hasInit;
+    private FillVariableValueResolver fillVariableValueResolver = new FillVariableValueResolver() {
+        @Override
+        public Object resolveValue(String variable, Map<String, Object> context) {
+            Object value = context.get(variable);
+            return value;
+        }
+    };
+
+    public FillVariableValueResolver getFillVariableValueResolver() {
+        return fillVariableValueResolver;
+    }
+
+    public void setFillVariableValueResolver(FillVariableValueResolver fillVariableValueResolver) {
+        this.fillVariableValueResolver = fillVariableValueResolver;
+    }
 
     public WriteDirectionEnum getDirection() {
         return direction;
